@@ -13,6 +13,7 @@ struct PrintableDay {
 
 type DisplayFunc = fn() -> Box<dyn Display + Send>;
 type DisplayTask = Task<Box<dyn Display + Send>, Box<DisplayFunc>>;
+
 pub struct TableGen {
     msg: String,
     tasks: Vec<(DisplayTask, DisplayTask)>,
@@ -33,6 +34,11 @@ impl TableGen {
         self.tasks.into_iter()
     }
     pub fn run(self) {
+        if self.tasks.is_empty() {
+            println!("no tasks!");
+            return;
+        }
+
         let msg = self.msg.clone();
         let mut tasks = self
             .into_iter()
