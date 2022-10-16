@@ -4,7 +4,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[derive(Clone, Copy)]
 pub struct Task<T: Send + 'static, F: Fn() -> T + Send + 'static> {
     f: F,
 }
@@ -12,6 +11,7 @@ impl<T: Send, F: Fn() -> T + Send> Task<T, F> {
     pub fn new(f: F) -> Self {
         Self { f }
     }
+
     pub fn spawn(self) -> TaskRunner<T> {
         TaskRunner {
             val: TaskResult::Loading(Instant::now()),
@@ -46,6 +46,7 @@ impl<T: Send> TaskRunner<T> {
         &self.val
     }
 
+    #[allow(unused)]
     pub fn consume(self) -> TaskResult<T> {
         if let Some(j) = self.j {
             TaskResult::Done {
