@@ -1,3 +1,2 @@
 #!/bin/bash
-export LD_PRELOAD_PATH="../target/release"
-ghci-9.4.2 ffi.hs -L../target/release -laoc_table
+LD_PRELOAD_PATH="/home/samuel/Git/aoc_table/target/release" ghci-9.4.2 -L/home/samuel/Git/aoc_table/target/release -laoc_table ffi.hs 
