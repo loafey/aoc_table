@@ -12,10 +12,10 @@ pub unsafe extern "C" fn create_table(msg: *const u8, len: usize) -> *mut TableG
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn add_func(
+pub unsafe extern "C" fn add_func_int_32(
     src: *mut TableGen,
-    p1: extern "C" fn() -> usize,
-    p2: extern "C" fn() -> usize,
+    p1: extern "C" fn() -> i32,
+    p2: extern "C" fn() -> i32,
 ) {
     println!("{}", p1());
     println!("{}", p2());
