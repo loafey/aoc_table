@@ -8,6 +8,7 @@ pub unsafe extern "C" fn create_table(msg: *const u8, len: usize) -> *mut TableG
     Box::leak(Box::new(TableGen::new(s)))
 }
 
+#[inline(always)]
 unsafe fn add_func<A, B>(
     src: *mut TableGen,
     p1: extern "C" fn() -> A,
