@@ -59,6 +59,12 @@ add{type1}{type2}Funcs (TableGen ptr) p1 p2 = do
     return finished
 
 
+def createWarpInstances(function):
+    type1 = replaceRustType(function.split('_')[2])
+    type2 = replaceRustType(function.split('_')[3])
+    return f"instance Tablable {type1} {type2} where addToTable = add{type1}{type2}Funcs"
+
+
 os.system("cargo build --release")
 nmOutput = os.popen(
     "nm target/release/libaoc_table.so | grep add_func_ | awk '{ print $3 }'")
@@ -71,6 +77,11 @@ types = list(dict.fromkeys(
 wrappers = list(map(createTypeWrapper, types))
 c_imports = list(map(createImportFunction, lines))
 functions = list(map(createAddFuncFunction, lines))
+wrap_instances = list(map(createWarpInstances, lines))
+
+
+print("type TF a b = TableGen -> a -> b -> TableGen")
+print("class Tablable a b where addToTable :: TF a b")
 
 for w in wrappers:
     print(w)
@@ -80,5 +91,8 @@ for c_import in c_imports:
 
 for function in functions:
     print(function)
+
+for wrap_instance in wrap_instances:
+    print(wrap_instance)
 
 # what we need, wrappers, c_imports, functions
