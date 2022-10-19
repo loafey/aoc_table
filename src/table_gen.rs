@@ -44,17 +44,10 @@ impl TableGen {
             function_wrapper(Box::new(p2)),
         )
     }
-    // pub fn add<F1, F2>(self, p1: F1, p2: F2) -> Self
-    // where
-    //     F1: Fn() -> Box<dyn Display + Send> + Send + 'static,
-    //     F2: Fn() -> Box<dyn Display + Send> + Send + 'static,
-    // {
-    //     fn function_wrapper<T>(f: Box<dyn Fn() -> T>) -> Box<dyn Fn() -> Box<T>> {
-    //         Box::new(move || Box::new(f()))
-    //     }
-    //
-    //     self.add_boxed(Box::new(p1), Box::new(p2))
-    // }
+
+    pub fn add_boxed_mut(&mut self, p1: DisplayFunc, p2: DisplayFunc) {
+        self.tasks.push((Task::new(p1), Task::new(p2)));
+    }
 
     pub fn add_boxed(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {
         self.tasks.push((Task::new(p1), Task::new(p2)));
@@ -65,7 +58,7 @@ impl TableGen {
     }
     pub fn run(self) {
         if self.tasks.is_empty() {
-            println!("no tasks!");
+            println!("Table \"{}\" has no tasks!", self.msg);
             return;
         }
 

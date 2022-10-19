@@ -23,25 +23,23 @@ foreign import ccall "lib.h run" rust_run :: Ptr Int -> IO ()
 runTable :: TableGen -> IO ()
 runTable (TableGen ptr) = ptr >>= rust_run
 
-foreign import ccall "lib.h add_func_int_32" rust_add_func_int_32 :: 
+foreign import ccall "lib.h add_func_int_32" rust_add_func_int_32 ::
                             Ptr Int ->
                             FunPtr (CInt -> CInt) ->
                             FunPtr (CInt -> CInt) ->
-                            IO ()
-addCIntFuncs :: TableGen -> (CInt -> CInt) -> (CInt -> CInt) ->  IO()
+                            IO (Ptr Int)
+addCIntFuncs :: TableGen -> (CInt -> CInt) -> (CInt -> CInt) -> TableGen
 addCIntFuncs (TableGen ptr) p1 p2 = do
-  ptr' <- ptr
-  p1' <- wrap_cint p1
-  p2' <- wrap_cint p2
-  rust_add_func_int_32 ptr' p1' p2'
+  let ptr' = unsafePerformIO ptr
+  let p1' =  unsafePerformIO $ wrap_cint p1
+  let p2' =  unsafePerformIO $ wrap_cint p2
+  TableGen $ rust_add_func_int_32 ptr' p1' p2'
 
 main :: IO ()
 main = do
     let table = createTable "Howdy from Haskell!"
 
-    addCIntFuncs table day1 day2
+    let table' = addCIntFuncs table (\x -> sum [0..100]) (const 421)
+    let table'' = addCIntFuncs table' (\x -> sum [0..1000]) (const 4121)
 
-    runTable table
-
-day1 x = 21312
-day2 x = 421
+    runTable table''
