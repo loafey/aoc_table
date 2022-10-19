@@ -11,8 +11,8 @@ struct PrintableDay {
     time: String,
 }
 
-type DisplayFunc = fn() -> Box<dyn Display + Send>;
-type DisplayTask = Task<Box<dyn Display + Send>, Box<DisplayFunc>>;
+type DisplayFunc = Box<dyn Fn() -> Box<dyn Display + Send> + Send>;
+type DisplayTask = Task<Box<dyn Display + Send>>;
 
 pub struct TableGen {
     msg: String,
@@ -25,9 +25,39 @@ impl TableGen {
             msg: msg.into(),
         }
     }
-    pub fn add(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {
-        self.tasks
-            .push((Task::new(Box::new(p1)), Task::new(Box::new(p2))));
+
+    pub fn add<A, B, F1, F2>(self, p1: F1, p2: F2) -> Self
+    where
+        A: Display + Send + 'static,
+        B: Display + Send + 'static,
+        F1: Fn() -> A + Send + 'static,
+        F2: Fn() -> B + Send + 'static,
+    {
+        fn function_wrapper<T: Display + Send + 'static>(
+            f: Box<dyn Fn() -> T + Send>,
+        ) -> Box<dyn Fn() -> Box<dyn Display + Send> + Send> {
+            Box::new(move || Box::new(f()))
+        }
+
+        self.add_boxed(
+            function_wrapper(Box::new(p1)),
+            function_wrapper(Box::new(p2)),
+        )
+    }
+    // pub fn add<F1, F2>(self, p1: F1, p2: F2) -> Self
+    // where
+    //     F1: Fn() -> Box<dyn Display + Send> + Send + 'static,
+    //     F2: Fn() -> Box<dyn Display + Send> + Send + 'static,
+    // {
+    //     fn function_wrapper<T>(f: Box<dyn Fn() -> T>) -> Box<dyn Fn() -> Box<T>> {
+    //         Box::new(move || Box::new(f()))
+    //     }
+    //
+    //     self.add_boxed(Box::new(p1), Box::new(p2))
+    // }
+
+    pub fn add_boxed(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {
+        self.tasks.push((Task::new(p1), Task::new(p2)));
         self
     }
     pub fn into_iter(self) -> impl Iterator<Item = (DisplayTask, DisplayTask)> {

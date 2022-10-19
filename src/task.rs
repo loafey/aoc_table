@@ -4,11 +4,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub struct Task<T: Send + 'static, F: Fn() -> T + Send + 'static> {
-    f: F,
+pub struct Task<T: Send + 'static> {
+    f: Box<dyn Fn() -> T + Send + 'static>,
 }
-impl<T: Send, F: Fn() -> T + Send> Task<T, F> {
-    pub fn new(f: F) -> Self {
+impl<T: Send> Task<T> {
+    pub fn new(f: Box<dyn Fn() -> T + Send>) -> Self {
         Self { f }
     }
 
