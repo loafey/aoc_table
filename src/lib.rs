@@ -1,7 +1,5 @@
 #![allow(clippy::missing_safety_doc)]
 
-mod ffi;
-mod table_gen;
-mod task;
-
-pub use ffi::*;
+pub mod ffi;
+pub mod table_gen;
+pub mod task;
