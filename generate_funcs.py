@@ -39,18 +39,18 @@ def getTypes(function):
 def createImportFunction(function):
     type1 = replaceRustType(function.split('_')[2])
     type2 = replaceRustType(function.split('_')[3])
-    fixed = f"""foreign import ccall "lib.h {function}" rust_{function} :: Ptr Int -> FunPtr (CInt -> {type1}) -> FunPtr (CInt -> {type2}) -> IO (Ptr Int)"""
+    fixed = f"""foreign import ccall "lib.h {function}" rust_{function} :: Ptr Int -> FunPtr {type1} -> FunPtr {type2} -> IO (Ptr Int)"""
     return fixed
 
 
 def createTypeWrapper(type):
-    return f"""foreign import ccall "wrapper" wrap{type} :: (CInt -> {type}) -> IO (FunPtr (CInt -> {type}))"""
+    return f"""foreign import ccall "wrapper" wrap{type} :: {type} -> IO (FunPtr {type})"""
 
 
 def createAddFuncFunction(function):
     type1 = replaceRustType(function.split('_')[2])
     type2 = replaceRustType(function.split('_')[3])
-    finished = f"""add{type1}{type2}Funcs :: TableGen -> (CInt -> {type1}) -> (CInt -> {type2}) -> TableGen
+    finished = f"""add{type1}{type2}Funcs :: TableGen -> {type1} -> {type2} -> TableGen
 add{type1}{type2}Funcs (TableGen ptr) p1 p2 = do
     let ptr' = unsafePerformIO ptr
     let p1' =  unsafePerformIO $ wrap{type1} p1
