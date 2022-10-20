@@ -34,7 +34,7 @@ gen_ffi! {
     ) -> *mut TableGen {
         add_func(src, p1, p2)
     },
-    bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64
+    bool, u64, i64, f64
 }
 
 #[no_mangle]
