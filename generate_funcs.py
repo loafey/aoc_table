@@ -47,22 +47,15 @@ def createTypeWrapper(type):
     return f"""foreign import ccall "wrapper" wrap{type} :: {type} -> IO (FunPtr {type})"""
 
 
-def createAddFuncFunction(function):
-    type1 = replaceRustType(function.split('_')[2])
-    type2 = replaceRustType(function.split('_')[3])
-    finished = f"""add{type1}{type2}Funcs :: TableGen -> {type1} -> {type2} -> TableGen
-add{type1}{type2}Funcs (TableGen ptr) p1 p2 = do
-    let ptr' = unsafePerformIO ptr
-    let p1' =  unsafePerformIO $ wrap{type1} p1
-    let p2' =  unsafePerformIO $ wrap{type2} p2
-    TableGen $ rust_{function} ptr' p1' p2'"""
-    return finished
-
-
 def createWarpInstances(function):
     type1 = replaceRustType(function.split('_')[2])
     type2 = replaceRustType(function.split('_')[3])
-    return f"instance Tablable {type1} {type2} where addToTable = add{type1}{type2}Funcs"
+    return f"""instance Tablable {type1} {type2} where 
+    addToTable (TableGen ptr) p1 p2 = do
+        let ptr' = unsafePerformIO ptr
+        let p1' =  unsafePerformIO $ wrap{type1} p1
+        let p2' =  unsafePerformIO $ wrap{type2} p2
+        TableGen $ rust_{function} ptr' p1' p2'"""
 
 
 os.system("cargo build --release")
@@ -76,7 +69,6 @@ types = list(dict.fromkeys(
 
 wrappers = list(map(createTypeWrapper, types))
 c_imports = list(map(createImportFunction, lines))
-functions = list(map(createAddFuncFunction, lines))
 wrap_instances = list(map(createWarpInstances, lines))
 
 
@@ -88,9 +80,6 @@ for w in wrappers:
 
 for c_import in c_imports:
     print(c_import)
-
-for function in functions:
-    print(function)
 
 for wrap_instance in wrap_instances:
     print(wrap_instance)
