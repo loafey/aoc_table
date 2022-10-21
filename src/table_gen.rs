@@ -56,6 +56,13 @@ impl TableGen {
     pub fn into_iter(self) -> impl Iterator<Item = (DisplayTask, DisplayTask)> {
         self.tasks.into_iter()
     }
+    pub fn run_day(mut self, day: usize) {
+        let funcs = self.tasks.remove(day - 1);
+        println!("╍╍╍ Part 1: ╍╍╍");
+        println!("{}", funcs.0.spawn().consume().assume_ok());
+        println!("╍╍╍ Part 2: ╍╍╍");
+        println!("{}", funcs.1.spawn().consume().assume_ok());
+    }
     pub fn run(self) {
         if self.tasks.is_empty() {
             println!("Table \"{}\" has no tasks!", self.msg);

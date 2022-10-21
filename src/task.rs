@@ -85,4 +85,11 @@ impl<T> TaskResult<T> {
             TaskResult::Loading(i) => i.elapsed(),
         }
     }
+
+    pub fn assume_ok(self) -> T {
+        match self {
+            TaskResult::Done { val, elapsed } => val.unwrap(),
+            TaskResult::Loading(_) => panic!("assumed correct!"),
+        }
+    }
 }
