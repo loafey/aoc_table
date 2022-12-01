@@ -45,11 +45,11 @@ impl TableGen {
         )
     }
 
-    pub fn add_boxed(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {
+    fn add_boxed(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {
         self.tasks.push((Task::new(p1), Task::new(p2)));
         self
     }
-    pub fn into_iter(self) -> impl Iterator<Item = (DisplayTask, DisplayTask)> {
+    pub fn itterify_me(self) -> impl Iterator<Item = (DisplayTask, DisplayTask)> {
         self.tasks.into_iter()
     }
     pub fn run_day(mut self, day: usize) {
@@ -67,7 +67,7 @@ impl TableGen {
 
         let msg = self.msg.clone();
         let mut tasks = self
-            .into_iter()
+            .itterify_me()
             .map(|(p1, p2)| (p1.spawn(), p2.spawn()))
             .collect::<Vec<_>>();
 
