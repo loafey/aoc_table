@@ -15,14 +15,6 @@ struct PrintableDay {
 type DisplayFunc = Box<dyn Fn() -> Box<dyn Display + Send> + Send>;
 type DisplayTask = Task<Box<dyn Display + Send>>;
 
-#[allow(clippy::upper_case_acronyms)]
-pub struct DTD<T: Debug>(pub T);
-impl<T: Debug> Display for DTD<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.0)
-    }
-}
-
 pub struct TableGen {
     msg: String,
     tasks: Vec<(DisplayTask, DisplayTask)>,

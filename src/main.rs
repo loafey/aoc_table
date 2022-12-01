@@ -3,7 +3,7 @@ mod table_gen;
 mod task;
 
 fn main() {
-    use table_gen::{TableGen, DTD};
+    use table_gen::TableGen;
     TableGen::new("Howdy AOC_2020 Solver :-)")
         .add(
             || rand::random::<f32>() * 10.0,
@@ -16,6 +16,5 @@ fn main() {
         )
         .add(rand::random::<i32>, rand::random::<bool>)
         .add(|| "Different", || "types!")
-        .add(|| DTD(Some(5)), || DTD(Some("Options")))
         .run();
 }
