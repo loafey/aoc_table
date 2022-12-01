@@ -188,7 +188,7 @@ impl TableGen {
                 "═".repeat(total_len),
                 " ".repeat(half_len),
                 msg,
-                " ".repeat(half_len + (total_len % 2) + dif),
+                " ".repeat(half_len + (total_len % 2) - dif),
                 "─".repeat(total_len)
             );
             let bottom_line = format!("╚{}╝", "═".repeat(total_len));
