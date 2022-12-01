@@ -1,4 +1,3 @@
-mod ffi;
 mod table_gen;
 mod task;
 

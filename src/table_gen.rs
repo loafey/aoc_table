@@ -1,7 +1,6 @@
 use crate::task::Task;
 use crate::task::TaskResult;
 use crossterm::{style::Print, ExecutableCommand};
-use std::fmt::Debug;
 use std::{cell::Cell, fmt::Display, io::stdout};
 use std::{thread, time::Duration};
 
@@ -44,10 +43,6 @@ impl TableGen {
             function_wrapper(Box::new(p1)),
             function_wrapper(Box::new(p2)),
         )
-    }
-
-    pub fn add_boxed_mut(&mut self, p1: DisplayFunc, p2: DisplayFunc) {
-        self.tasks.push((Task::new(p1), Task::new(p2)));
     }
 
     pub fn add_boxed(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {

@@ -1,5 +1,4 @@
 A (currently undocumented) library for running AoC tasks in parallel, with a fancy timer that updates in real time :-)
-Also includes extremely scuffed and highly ugly Haskell bindings for those who seek danger.
 
 ```rust
 fn main() {
