@@ -176,14 +176,19 @@ impl TableGen {
             }
 
             let total_len = day_width + p1_width + p2_width + time_width + 11;
-            let half_len =
-                (total_len / 2) - (msg.chars().map(|c| c.len_utf16()).sum::<usize>() / 2);
+            let msg_len = msg.chars().map(|c| c.len_utf16()).sum::<usize>();
+            let half_len = (total_len / 2) - (msg_len / 2);
+            let dif = if (half_len + msg_len + half_len) < total_len {
+                total_len - (half_len + msg_len + half_len)
+            } else {
+                0
+            };
             let top_line = format!(
                 "╔{}╗\n║{}{}{}║\n╟{}╢",
                 "═".repeat(total_len),
                 " ".repeat(half_len),
                 msg,
-                " ".repeat(half_len + (total_len % 2)),
+                " ".repeat(half_len + (total_len % 2) + dif),
                 "─".repeat(total_len)
             );
             let bottom_line = format!("╚{}╝", "═".repeat(total_len));
