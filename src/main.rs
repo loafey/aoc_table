@@ -4,7 +4,7 @@ mod task;
 
 fn main() {
     use table_gen::TableGen;
-    TableGen::new("Howdy AOC_2020 Solver :-)")
+    TableGen::new("Howdy AOC_2020 Solver :-) ")
         .add(
             || rand::random::<f32>() * 10.0,
             || {
