@@ -12,4 +12,3 @@ crate-type = ["lib", "cdylib"]
 [dependencies]
 rand = "0.8.5"
 crossterm = "0.25.0"
-ffi_gen = { path="ffi_gen" }
