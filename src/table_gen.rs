@@ -86,6 +86,40 @@ impl TableGen {
         )
     }
 
+    /// Register solvers for both parts of the next highest day.  The solvers
+    /// will be registered for the highest currently registered day + 1.  If no
+    /// day is registered for, the default is 1.
+    ///
+    /// # Arguments
+    ///
+    /// * `p1` - The solver for the first part of the puzzle.  Should return a
+    /// value that can be displayed.
+    /// * `p2` - The solver for the first part of the puzzle.  Should return a
+    /// value that can be displayed.
+    pub fn add_next<A, B, F1, F2>(self, p1: F1, p2: F2) -> Self
+    where
+        A: Display + Send + 'static,
+        B: Display + Send + 'static,
+        F1: Fn() -> A + Send + 'static,
+        F2: Fn() -> B + Send + 'static,
+    {
+        fn function_wrapper<T: Display + Send + 'static>(
+            f: Box<dyn Fn() -> T + Send>,
+        ) -> Box<dyn Fn() -> Box<dyn Display + Send> + Send> {
+            Box::new(move || Box::new(f()))
+        }
+
+        let day = match self.tasks.keys().last() {
+            Some(d) => d + 1,
+            None => 1, // Default to day 1 if no solvers are registered.
+        };
+        self.add_boxed(
+            day,
+            function_wrapper(Box::new(p1)),
+            function_wrapper(Box::new(p2)),
+        )
+    }
+
     fn add_boxed(mut self, day: usize, p1: DisplayFunc, p2: DisplayFunc) -> Self {
         self.tasks.insert(
             day,
