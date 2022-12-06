@@ -5,11 +5,16 @@ use std::{
 };
 
 pub struct Task<T: Send + 'static> {
-    f: Box<dyn Fn() -> T + Send + 'static>,
+    f: Box<dyn Fn() -> (T, Duration) + Send + 'static>,
 }
 impl<T: Send> Task<T> {
     pub fn new(f: Box<dyn Fn() -> T + Send>) -> Self {
-        Self { f }
+        Self {
+            f: Box::new(move || {
+                let i = Instant::now();
+                (f(), i.elapsed())
+            }),
+        }
     }
 
     pub fn spawn(self) -> TaskRunner<T> {
@@ -23,7 +28,7 @@ impl<T: Send> Task<T> {
 #[derive(Debug)]
 pub struct TaskRunner<T: Send + 'static> {
     val: TaskResult<T>,
-    j: Option<JoinHandle<T>>,
+    j: Option<JoinHandle<(T, Duration)>>,
 }
 impl<T: Send> TaskRunner<T> {
     pub fn is_finished(&self) -> bool {
@@ -61,7 +66,7 @@ impl<T: Send> TaskRunner<T> {
 
 pub enum TaskResult<T> {
     Done {
-        val: Result<T, Box<dyn Any + Send + 'static>>,
+        val: Result<(T, Duration), Box<dyn Any + Send + 'static>>,
         elapsed: Duration,
     },
     Loading(Instant),
@@ -88,7 +93,7 @@ impl<T> TaskResult<T> {
 
     pub fn assume_ok(self) -> T {
         match self {
-            TaskResult::Done { val, elapsed } => val.unwrap(),
+            TaskResult::Done { val, elapsed } => val.unwrap().0,
             TaskResult::Loading(_) => panic!("assumed correct!"),
         }
     }

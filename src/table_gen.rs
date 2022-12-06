@@ -11,6 +11,7 @@ struct PrintableDay {
     p1_result: String,
     p2_result: String,
     time: String,
+    time_sec: String,
 }
 
 type DisplayFunc = Box<dyn Fn() -> Box<dyn Display + Send> + Send>;
@@ -86,6 +87,7 @@ impl TableGen {
         let p1_width = Cell::new(0);
         let p2_width = Cell::new(0);
         let time_width = Cell::new(0);
+        let time_sec_width = Cell::new(0);
 
         let (org_x, org_y) = crossterm::cursor::position().unwrap();
         stdout().execute(crossterm::cursor::Hide).unwrap();
@@ -101,41 +103,46 @@ impl TableGen {
                 .enumerate()
                 .map(|(day, (p1, p2))| {
                     let day = format!("{}", day + 1);
-                    let p1_result = if let TaskResult::Done { val, .. } = p1.get_val() {
+                    let (p1_result, p1_time) = if let TaskResult::Done { val, .. } = p1.get_val() {
                         match val {
-                            Ok(o) => format!("{}", o),
-                            Err(e) => format!("{:?}", e),
+                            Ok((o, t)) => (format!("{o}"), Some(*t)),
+                            Err(e) => (format!("{e:?}"), None),
                         }
                     } else {
-                        "Loading...".to_string()
+                        ("Loading...".to_string(), None)
                     };
-                    let p2_result = if let TaskResult::Done { val, .. } = p2.get_val() {
+                    let (p2_result, p2_time) = if let TaskResult::Done { val, .. } = p2.get_val() {
                         match val {
-                            Ok(o) => format!("{}", o),
-                            Err(e) => format!("{:?}", e),
+                            Ok((o, t)) => (format!("{o}"), Some(*t)),
+                            Err(e) => (format!("{e:?}"), None),
                         }
                     } else {
-                        "Loading...".to_string()
+                        ("Loading...".to_string(), None)
                     };
-                    let time = match p1.get_val() {
-                        TaskResult::Done { elapsed, .. } => elapsed.as_secs_f32(),
-                        TaskResult::Loading(i) => i.elapsed().as_secs_f32(),
+                    let time = match (p1_time, p1.get_val()) {
+                        (Some(t), _) => t.as_micros(),
+                        (None, TaskResult::Done { elapsed, .. }) => elapsed.as_micros(),
+                        (None, TaskResult::Loading(i)) => i.elapsed().as_micros(),
                     }
-                    .max(match p2.get_val() {
-                        TaskResult::Done { elapsed, .. } => elapsed.as_secs_f32(),
-                        TaskResult::Loading(i) => i.elapsed().as_secs_f32(),
+                    .max(match (p2_time, p2.get_val()) {
+                        (Some(t), _) => t.as_micros(),
+                        (None, TaskResult::Done { elapsed, .. }) => elapsed.as_micros(),
+                        (None, TaskResult::Loading(i)) => i.elapsed().as_micros(),
                     });
-                    let time = format!("{:.3}s", time);
+                    let time_sec = format!("{:.4} s", time as f64 / 1000000.0);
+                    let time = format!("{time:.3} μs");
                     day_width.set(day_width.get().max(day.len()));
                     p1_width.set(p1_width.get().max(p1_result.len()));
                     p2_width.set(p2_width.get().max(p2_result.len()));
                     time_width.set(time_width.get().max(time.len()));
+                    time_sec_width.set(time_sec_width.get().max(time_sec.len()));
 
                     PrintableDay {
                         day,
                         p1_result,
                         p2_result,
                         time,
+                        time_sec,
                     }
                 })
                 .collect::<Vec<_>>();
@@ -144,16 +151,18 @@ impl TableGen {
             let p1_width = p1_width.get();
             let p2_width = p2_width.get();
             let time_width = time_width.get();
+            let time_sec_width = time_sec_width.get();
 
             for PrintableDay {
                 day,
                 p1_result,
                 p2_result,
                 time,
+                time_sec,
             } in printable_table
             {
                 let prepped_string = format!(
-                    "║ {}{} │ {}{} │ {}{} │ {}{} ║",
+                    "║ {}{} │ {}{} │ {}{} │ {}{} │ {}{} ║",
                     " ".repeat(day_width - day.len()),
                     day,
                     p1_result,
@@ -161,7 +170,9 @@ impl TableGen {
                     p2_result,
                     " ".repeat(p2_width - p2_result.len()),
                     time,
-                    " ".repeat(time_width - time.len())
+                    " ".repeat(time_width - time.len()),
+                    time_sec,
+                    " ".repeat(time_sec_width - time_sec.len())
                 );
                 stdout()
                     .execute(crossterm::cursor::MoveUp(0))
@@ -179,7 +190,7 @@ impl TableGen {
                     .unwrap();
             }
 
-            let total_len = day_width + p1_width + p2_width + time_width + 11;
+            let total_len = day_width + p1_width + p2_width + time_width + time_sec_width + 13;
             let msg_len = msg.chars().map(|c| c.len_utf16()).sum::<usize>();
             let half_len = (total_len / 2) - (msg_len / 2);
             let dif = if (half_len + msg_len + half_len) < total_len {
@@ -192,7 +203,7 @@ impl TableGen {
                 "═".repeat(total_len),
                 " ".repeat(half_len),
                 msg,
-                " ".repeat(half_len + (total_len % 2) - dif),
+                " ".repeat(half_len + dif),
                 "─".repeat(total_len)
             );
             let bottom_line = format!("╚{}╝", "═".repeat(total_len));
