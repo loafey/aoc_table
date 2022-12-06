@@ -2,6 +2,7 @@ use crate::task::Task;
 use crate::task::TaskResult;
 use chrono::Datelike;
 use crossterm::{style::Print, ExecutableCommand};
+use std::time::Instant;
 use std::{cell::Cell, fmt::Display, io::stdout};
 use std::{thread, time::Duration};
 
@@ -56,9 +57,13 @@ impl TableGen {
     pub fn run_day(mut self, day: usize) {
         let funcs = self.tasks.remove(day - 1);
         println!("╍╍╍ Part 1: ╍╍╍");
+        let time = Instant::now();
         println!("{}", funcs.0.spawn().consume().assume_ok());
+        println!("╍ Solution took: {}μs ╍", time.elapsed().as_micros());
         println!("╍╍╍ Part 2: ╍╍╍");
+        let time = Instant::now();
         println!("{}", funcs.1.spawn().consume().assume_ok());
+        println!("╍ Solution took: {}μs ╍", time.elapsed().as_micros());
     }
     pub fn run_current_day(self) {
         self.run_day(chrono::Local::now().date_naive().day() as usize)
