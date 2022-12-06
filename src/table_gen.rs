@@ -2,7 +2,7 @@ use crate::task::Task;
 use crate::task::TaskResult;
 use chrono::Datelike;
 use crossterm::{style::Print, ExecutableCommand};
-use std::time::Instant;
+use std::collections::BTreeMap;
 use std::{cell::Cell, fmt::Display, io::stdout};
 use std::{thread, time::Duration};
 
@@ -14,22 +14,59 @@ struct PrintableDay {
     time_sec: String,
 }
 
+// A boxed function that returns
 type DisplayFunc = Box<dyn Fn() -> Box<dyn Display + Send> + Send>;
-type DisplayTask = Task<Box<dyn Display + Send>>;
+
+// A tuple of solvers for a day.
+struct DaySolvers {
+    part1: DisplayFunc,
+    part2: DisplayFunc,
+}
 
 pub struct TableGen {
+    // The header to be printed at the top of the formatted table from `run`.
     msg: String,
-    tasks: Vec<(DisplayTask, DisplayTask)>,
+
+    // A map from days to solvers.
+    tasks: BTreeMap<usize, DaySolvers>, // TODO: Rename to something else ("solvers"?)
 }
 impl TableGen {
-    pub fn new<S: Into<String>>(msg: S) -> Self {
+    /// Create a new TableGen instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `table_header` - A header that will be included in the table printed
+    /// from `run`.
+    pub fn new<S: Into<String>>(table_header: S) -> Self {
         Self {
-            tasks: Vec::new(),
-            msg: msg.into(),
+            tasks: BTreeMap::new(),
+            msg: table_header.into(),
         }
     }
 
-    pub fn add<A, B, F1, F2>(self, p1: F1, p2: F2) -> Self
+    /// Register solvers for both parts of a given day.  A solver is a function
+    /// that returns a value that can be displayed.  The solvers do not have to
+    /// be added in order.
+    ///
+    /// # Arguments
+    ///
+    /// * `day` - The day to register the solvers for.
+    /// * `p1` - The solver for the first part of the puzzle.  Should return a
+    /// value that can be displayed.
+    /// * `p2` - The solver for the first part of the puzzle.  Should return a
+    /// value that can be displayed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aoc_table::table_gen::TableGen;
+    /// TableGen::new("Howdy AOC_2022 Solver :-)")
+    ///     .add(2, rand::random::<i32>, rand::random::<bool>)
+    ///     .add(6, || "Different", || "types!");
+    ///
+    /// // Then call .run() to run the solvers and print the output.
+    /// ```
+    pub fn add<A, B, F1, F2>(self, day: usize, p1: F1, p2: F2) -> Self
     where
         A: Display + Send + 'static,
         B: Display + Send + 'static,
@@ -43,32 +80,74 @@ impl TableGen {
         }
 
         self.add_boxed(
+            day,
             function_wrapper(Box::new(p1)),
             function_wrapper(Box::new(p2)),
         )
     }
 
-    fn add_boxed(mut self, p1: DisplayFunc, p2: DisplayFunc) -> Self {
-        self.tasks.push((Task::new(p1), Task::new(p2)));
+    fn add_boxed(mut self, day: usize, p1: DisplayFunc, p2: DisplayFunc) -> Self {
+        self.tasks.insert(
+            day,
+            DaySolvers {
+                part1: p1,
+                part2: p2,
+            },
+        );
         self
     }
-    pub fn itterify_me(self) -> impl Iterator<Item = (DisplayTask, DisplayTask)> {
+
+    fn itterify_me(self) -> impl Iterator<Item = (usize, DaySolvers)> {
         self.tasks.into_iter()
     }
+
+    /// Run the solvers for a given day, printing the result and time elapsed.
+    ///
+    /// # Arguments
+    ///
+    /// * `day` - The day to run the solvers for.
+    ///
+    /// # Panics
+    ///
+    /// Panics if there are no solvers registered for the given day.
     pub fn run_day(mut self, day: usize) {
-        let funcs = self.tasks.remove(day - 1);
+        let err_msg = format!("No solution for day {day} in the Table!");
+        let solvers = self
+            .tasks
+            .remove(&day)
+            .unwrap_or_else(|| panic!("{}", err_msg.to_string()));
+
         println!("╍╍╍ Part 1: ╍╍╍");
-        let (res, time) = funcs.0.spawn().consume().assume_ok();
+        let (res, time) = Task::new(solvers.part1).spawn().consume().assume_ok();
         println!("{res}");
         println!("╍ Solution took: {}μs ╍", time.as_micros());
         println!("╍╍╍ Part 2: ╍╍╍");
-        let (res, time) = funcs.1.spawn().consume().assume_ok();
+        let (res, time) = Task::new(solvers.part2).spawn().consume().assume_ok();
         println!("{res}");
         println!("╍ Solution took: {}μs ╍", time.as_micros());
     }
+
+    /// Run the solvers for the current day, printing the result and time
+    /// elapsed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if there are no solvers registered for the current day.
     pub fn run_current_day(self) {
-        self.run_day(chrono::Local::now().date_naive().day() as usize)
+        let today = chrono::Local::now().date_naive().day() as usize;
+        if self.tasks.contains_key(&today) {
+            self.run_day(today)
+        } else {
+            panic!("No solution registered for today's date! ({today})")
+        }
     }
+
+    /// Run all registered solvers, printing the result and time elapsed into a
+    /// nicely formatted table.
+    ///
+    /// # Panics
+    ///
+    /// Panics if there is a bug in the implementation of `run`.
     pub fn run(self) {
         if self.tasks.is_empty() {
             println!("Table \"{}\" has no tasks!", self.msg);
@@ -78,7 +157,13 @@ impl TableGen {
         let msg = self.msg.clone();
         let mut tasks = self
             .itterify_me()
-            .map(|(p1, p2)| (p1.spawn(), p2.spawn()))
+            .map(|(day, solvers)| {
+                (
+                    day,
+                    Task::new(solvers.part1).spawn(),
+                    Task::new(solvers.part2).spawn(),
+                )
+            })
             .collect::<Vec<_>>();
 
         println!("{}", "\n".repeat(tasks.len() + 2));
@@ -94,15 +179,14 @@ impl TableGen {
         loop {
             let should_break = tasks
                 .iter()
-                .map(|(p1, p2)| p1.is_finished() && p2.is_finished())
+                .map(|(_day, p1, p2)| p1.is_finished() && p2.is_finished())
                 .reduce(|accum, item| accum && item)
                 .unwrap_or_default();
 
             let mut printable_table = tasks
                 .iter_mut()
-                .enumerate()
-                .map(|(day, (p1, p2))| {
-                    let day = format!("{}", day + 1);
+                .map(|(day, p1, p2)| {
+                    let day = format!("{day}");
                     let (p1_result, p1_time) = if let TaskResult::Done { val, .. } = p1.get_val() {
                         match val {
                             Ok((o, t)) => (format!("{o}"), Some(*t)),
