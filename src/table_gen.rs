@@ -58,13 +58,13 @@ impl TableGen {
     pub fn run_day(mut self, day: usize) {
         let funcs = self.tasks.remove(day - 1);
         println!("╍╍╍ Part 1: ╍╍╍");
-        let time = Instant::now();
-        println!("{}", funcs.0.spawn().consume().assume_ok());
-        println!("╍ Solution took: {}μs ╍", time.elapsed().as_micros());
+        let (res, time) = funcs.0.spawn().consume().assume_ok();
+        println!("{res}");
+        println!("╍ Solution took: {}μs ╍", time.as_micros());
         println!("╍╍╍ Part 2: ╍╍╍");
-        let time = Instant::now();
-        println!("{}", funcs.1.spawn().consume().assume_ok());
-        println!("╍ Solution took: {}μs ╍", time.elapsed().as_micros());
+        let (res, time) = funcs.1.spawn().consume().assume_ok();
+        println!("{res}");
+        println!("╍ Solution took: {}μs ╍", time.as_micros());
     }
     pub fn run_current_day(self) {
         self.run_day(chrono::Local::now().date_naive().day() as usize)

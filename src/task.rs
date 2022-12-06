@@ -91,9 +91,9 @@ impl<T> TaskResult<T> {
         }
     }
 
-    pub fn assume_ok(self) -> T {
+    pub fn assume_ok(self) -> (T, Duration) {
         match self {
-            TaskResult::Done { val, elapsed } => val.unwrap().0,
+            TaskResult::Done { val, .. } => val.unwrap(),
             TaskResult::Loading(_) => panic!("assumed correct!"),
         }
     }
