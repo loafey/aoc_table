@@ -347,7 +347,7 @@ impl TableGen {
         stdout().execute(crossterm::cursor::Show).unwrap();
     }
 
-    pub fn run_benchmarks(self) -> Vec<(usize, Duration, Duration)> {
+    pub fn run_benchmarks(self) -> Vec<(usize, (String, Duration), (String, Duration))> {
         let mut tasks = self
             .itterify_me()
             .map(|(day, solvers)| {
@@ -377,7 +377,11 @@ impl TableGen {
         }
         tasks
             .into_iter()
-            .map(|(u, p1, p2)| (u, p1.assume_ok().1, p2.assume_ok().1))
+            .map(|(u, p1, p2)| {
+                let (a1, d1) = p1.assume_ok();
+                let (a2, d2) = p2.assume_ok();
+                (u, (format!("{a1}"), d1), (format!("{a2}"), d2))
+            })
             .collect()
     }
 }
