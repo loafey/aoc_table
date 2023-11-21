@@ -346,4 +346,38 @@ impl TableGen {
 
         stdout().execute(crossterm::cursor::Show).unwrap();
     }
+
+    pub fn run_benchmarks(self) -> Vec<(usize, Duration, Duration)> {
+        let mut tasks = self
+            .itterify_me()
+            .map(|(day, solvers)| {
+                (
+                    day,
+                    Task::new(solvers.part1).spawn(),
+                    Task::new(solvers.part2).spawn(),
+                )
+            })
+            .map(|(d, p1, p2)| (d, p1.consume(), p2.consume()))
+            .collect::<Vec<_>>();
+
+        loop {
+            let mut all_done = true;
+            for t in &tasks {
+                if matches!(
+                    t,
+                    (_, TaskResult::Loading { .. }, _) | (_, _, TaskResult::Loading { .. })
+                ) {
+                    all_done = false;
+                    break;
+                }
+            }
+            if all_done {
+                break;
+            }
+        }
+        tasks
+            .into_iter()
+            .map(|(u, p1, p2)| (u, p1.assume_ok().1, p2.assume_ok().1))
+            .collect()
+    }
 }
