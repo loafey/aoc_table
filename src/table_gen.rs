@@ -3,8 +3,20 @@ use crate::task::TaskResult;
 use chrono::Datelike;
 use crossterm::{style::Print, ExecutableCommand};
 use std::collections::BTreeMap;
+use std::time::Instant;
 use std::{cell::Cell, fmt::Display, io::stdout};
 use std::{thread, time::Duration};
+
+#[derive(Debug)]
+pub struct BenchmarkResults {
+    pub day: usize,
+    pub p1_best: Duration,
+    pub p1_worst: Duration,
+    pub p1_avg: Duration,
+    pub p2_best: Duration,
+    pub p2_worst: Duration,
+    pub p2_avg: Duration,
+}
 
 struct PrintableDay {
     day: String,
@@ -347,45 +359,50 @@ impl TableGen {
         stdout().execute(crossterm::cursor::Show).unwrap();
     }
 
-    pub fn run_benchmarks(self) -> (String, Vec<(usize, (String, Duration), (String, Duration))>) {
+    pub fn run_benchmarks(self) -> (String, Vec<BenchmarkResults>) {
         let name = self.msg.clone();
+        const TEST_AMOUNT: u32 = 100;
         let tasks = self
             .itterify_me()
             .map(|(day, solvers)| {
-                (
+                let mut p1_best = Duration::from_secs(10000000);
+                let mut p1_avg = Duration::from_secs(0);
+                let mut p1_worst = Duration::from_secs(0);
+                for _ in 0..TEST_AMOUNT {
+                    let instant = Instant::now();
+                    (solvers.part1)();
+                    let time = instant.elapsed();
+                    p1_avg += time;
+                    p1_best = p1_best.min(time);
+                    p1_worst = p1_worst.max(time);
+                }
+                p1_avg /= TEST_AMOUNT;
+
+                let mut p2_best = Duration::from_secs(10000000);
+                let mut p2_avg = Duration::from_secs(0);
+                let mut p2_worst = Duration::from_secs(0);
+                for _ in 0..TEST_AMOUNT {
+                    let instant = Instant::now();
+                    (solvers.part2)();
+                    let time = instant.elapsed();
+                    p2_avg += time;
+                    p2_best = p2_best.min(time);
+                    p2_worst = p2_worst.max(time);
+                }
+                p2_avg /= TEST_AMOUNT;
+
+                BenchmarkResults {
                     day,
-                    Task::new(solvers.part1).spawn(),
-                    Task::new(solvers.part2).spawn(),
-                )
+                    p1_best,
+                    p1_worst,
+                    p1_avg,
+                    p2_best,
+                    p2_worst,
+                    p2_avg,
+                }
             })
-            .map(|(d, p1, p2)| (d, p1.consume(), p2.consume()))
             .collect::<Vec<_>>();
 
-        loop {
-            let mut all_done = true;
-            for t in &tasks {
-                if matches!(
-                    t,
-                    (_, TaskResult::Loading { .. }, _) | (_, _, TaskResult::Loading { .. })
-                ) {
-                    all_done = false;
-                    break;
-                }
-            }
-            if all_done {
-                break;
-            }
-        }
-        (
-            name,
-            tasks
-                .into_iter()
-                .map(|(u, p1, p2)| {
-                    let (a1, d1) = p1.assume_ok();
-                    let (a2, d2) = p2.assume_ok();
-                    (u, (format!("{a1}"), d1), (format!("{a2}"), d2))
-                })
-                .collect(),
-        )
+        (name, tasks)
     }
 }
