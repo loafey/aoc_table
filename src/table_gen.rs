@@ -10,9 +10,11 @@ use std::{thread, time::Duration};
 #[derive(Debug)]
 pub struct BenchmarkResults {
     pub day: usize,
+    pub p1_ans: String,
     pub p1_best: Duration,
     pub p1_worst: Duration,
     pub p1_avg: Duration,
+    pub p2_ans: String,
     pub p2_best: Duration,
     pub p2_worst: Duration,
     pub p2_avg: Duration,
@@ -368,10 +370,12 @@ impl TableGen {
                 let mut p1_best = Duration::from_secs(10000000);
                 let mut p1_avg = Duration::from_secs(0);
                 let mut p1_worst = Duration::from_secs(0);
+                let mut p1_ans = String::new();
                 for _ in 0..TEST_AMOUNT {
                     let instant = Instant::now();
-                    (solvers.part1)();
+                    let p1_a = (solvers.part1)();
                     let time = instant.elapsed();
+                    p1_ans = format!("{p1_a}");
                     p1_avg += time;
                     p1_best = p1_best.min(time);
                     p1_worst = p1_worst.max(time);
@@ -381,10 +385,12 @@ impl TableGen {
                 let mut p2_best = Duration::from_secs(10000000);
                 let mut p2_avg = Duration::from_secs(0);
                 let mut p2_worst = Duration::from_secs(0);
+                let mut p2_ans = String::new();
                 for _ in 0..TEST_AMOUNT {
                     let instant = Instant::now();
-                    (solvers.part2)();
+                    let p2_a = (solvers.part2)();
                     let time = instant.elapsed();
+                    p2_ans = format!("{p2_a}");
                     p2_avg += time;
                     p2_best = p2_best.min(time);
                     p2_worst = p2_worst.max(time);
@@ -393,9 +399,11 @@ impl TableGen {
 
                 BenchmarkResults {
                     day,
+                    p1_ans,
                     p1_best,
                     p1_worst,
                     p1_avg,
+                    p2_ans,
                     p2_best,
                     p2_worst,
                     p2_avg,
