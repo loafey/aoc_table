@@ -168,11 +168,11 @@ impl TableGen {
         println!("╍╍╍ Part 1: ╍╍╍");
         let (res, time) = Task::new(solvers.part1).spawn().consume().assume_ok();
         println!("{res}");
-        println!("╍ Solution took: {}μs ╍", time.as_micros());
+        println!("╍ Solution took: {:?} ╍", time);
         println!("╍╍╍ Part 2: ╍╍╍");
         let (res, time) = Task::new(solvers.part2).spawn().consume().assume_ok();
         println!("{res}");
-        println!("╍ Solution took: {}μs ╍", time.as_micros());
+        println!("╍ Solution took: {:?} ╍", time);
     }
 
     /// Run the solvers for the current day, printing the result and time
