@@ -361,9 +361,8 @@ impl TableGen {
         stdout().execute(crossterm::cursor::Show).unwrap();
     }
 
-    pub fn run_benchmarks(self) -> (String, Vec<BenchmarkResults>) {
+    pub fn run_benchmarks(self, test_amount: u32) -> (String, Vec<BenchmarkResults>) {
         let name = self.msg.clone();
-        const TEST_AMOUNT: u32 = 100;
         let tasks = self
             .itterify_me()
             .map(|(day, solvers)| {
@@ -371,7 +370,7 @@ impl TableGen {
                 let mut p1_avg = Duration::from_secs(0);
                 let mut p1_worst = Duration::from_secs(0);
                 let mut p1_ans = String::new();
-                for _ in 0..TEST_AMOUNT {
+                for _ in 0..test_amount {
                     let instant = Instant::now();
                     let p1_a = (solvers.part1)();
                     let time = instant.elapsed();
@@ -380,13 +379,13 @@ impl TableGen {
                     p1_best = p1_best.min(time);
                     p1_worst = p1_worst.max(time);
                 }
-                p1_avg /= TEST_AMOUNT;
+                p1_avg /= test_amount;
 
                 let mut p2_best = Duration::from_secs(10000000);
                 let mut p2_avg = Duration::from_secs(0);
                 let mut p2_worst = Duration::from_secs(0);
                 let mut p2_ans = String::new();
-                for _ in 0..TEST_AMOUNT {
+                for _ in 0..test_amount {
                     let instant = Instant::now();
                     let p2_a = (solvers.part2)();
                     let time = instant.elapsed();
@@ -395,7 +394,7 @@ impl TableGen {
                     p2_best = p2_best.min(time);
                     p2_worst = p2_worst.max(time);
                 }
-                p2_avg /= TEST_AMOUNT;
+                p2_avg /= test_amount;
 
                 BenchmarkResults {
                     day,
