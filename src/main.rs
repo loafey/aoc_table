@@ -13,7 +13,7 @@ fn main() {
             .add(2, rand::random::<i32>, rand::random::<bool>)
             .add(5, || "Different", || "types!")
             .add_next(|| "Different", || "types!")
-            .run_benchmarks(10)
+            .run_benchmarks(10, true)
     );
 
     // TableGen::new("Howdy AOC_2022 Solver :-) ")

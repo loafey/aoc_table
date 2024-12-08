@@ -361,11 +361,20 @@ impl TableGen {
         stdout().execute(crossterm::cursor::Show).unwrap();
     }
 
-    pub fn run_benchmarks(self, test_amount: u32) -> (String, Vec<BenchmarkResults>) {
+    pub fn run_benchmarks(
+        self,
+        test_amount: u32,
+        print_status: bool,
+    ) -> (String, Vec<BenchmarkResults>) {
         let name = self.msg.clone();
         let tasks = self
             .itterify_me()
-            .map(|(day, solvers)| {
+            .enumerate()
+            .map(|(i, (day, solvers))| {
+                let i = i + 1;
+                if print_status {
+                    eprintln!("Running benchmark for day {i}...");
+                }
                 let mut p1_best = Duration::from_secs(10000000);
                 let mut p1_avg = Duration::from_secs(0);
                 let mut p1_worst = Duration::from_secs(0);
