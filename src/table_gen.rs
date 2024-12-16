@@ -379,7 +379,11 @@ impl TableGen {
                 let mut p1_avg = Duration::from_secs(0);
                 let mut p1_worst = Duration::from_secs(0);
                 let mut p1_ans = String::new();
-                for _ in 0..test_amount {
+                let mut break_after_10 = false;
+                for i in 0..test_amount {
+                    if break_after_10 && i > 10 {
+                        break;
+                    }
                     let instant = Instant::now();
                     let p1_a = (solvers.part1)();
                     let time = instant.elapsed();
@@ -387,6 +391,9 @@ impl TableGen {
                     p1_avg += time;
                     p1_best = p1_best.min(time);
                     p1_worst = p1_worst.max(time);
+                    if time.as_secs_f32() > 0.5 {
+                        break_after_10 = true;
+                    }
                 }
                 p1_avg /= test_amount;
 
@@ -394,7 +401,11 @@ impl TableGen {
                 let mut p2_avg = Duration::from_secs(0);
                 let mut p2_worst = Duration::from_secs(0);
                 let mut p2_ans = String::new();
+                let mut break_after_10 = false;
                 for _ in 0..test_amount {
+                    if break_after_10 && i > 10 {
+                        break;
+                    }
                     let instant = Instant::now();
                     let p2_a = (solvers.part2)();
                     let time = instant.elapsed();
@@ -402,6 +413,9 @@ impl TableGen {
                     p2_avg += time;
                     p2_best = p2_best.min(time);
                     p2_worst = p2_worst.max(time);
+                    if time.as_secs_f32() > 0.5 {
+                        break_after_10 = true;
+                    }
                 }
                 p2_avg /= test_amount;
 
