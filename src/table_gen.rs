@@ -175,6 +175,37 @@ impl TableGen {
         println!("╍ Solution took: {:?} ╍", time);
     }
 
+    /// Benchmark a day and a specific part.
+    /// Get result as a JSON.
+    pub fn benchmark_day_json(mut self, day: usize, part1: bool) {
+        let Some(solvers) = self.tasks.remove(&day) else {
+            return;
+        };
+        let task = if part1 { solvers.part1 } else { solvers.part2 };
+
+        let test_amount = 1000;
+        let mut best = Duration::from_secs(10000000);
+        let mut avg = Duration::from_secs(0);
+        let mut worst = Duration::from_secs(0);
+        let mut break_after_10 = false;
+        for i in 0..test_amount {
+            if break_after_10 && i > 10 {
+                break;
+            }
+            let instant = Instant::now();
+            _ = (task)();
+            let time = instant.elapsed();
+            avg += time;
+            best = best.min(time);
+            worst = worst.max(time);
+            if time.as_secs_f32() > 0.5 {
+                break_after_10 = true;
+            }
+        }
+        avg /= test_amount;
+        println!(r#"{{ "best": "{best:?}", "avg": "{avg:?}", "worst": "{worst:?}" }}"#)
+    }
+
     /// Run the solvers for the current day, printing the result and time
     /// elapsed.
     ///

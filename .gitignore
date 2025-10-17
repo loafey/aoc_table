@@ -1,3 +1,4 @@
 /target
+/.direnv
 /ffi_gen/target
 Cargo.lock
