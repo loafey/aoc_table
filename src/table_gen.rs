@@ -183,7 +183,7 @@ impl TableGen {
         };
         let task = if part1 { solvers.part1 } else { solvers.part2 };
 
-        let test_amount = 1000;
+        let test_amount = 100;
         let mut best = Duration::from_secs(10000000);
         let mut avg = Duration::from_secs(0);
         let mut worst = Duration::from_secs(0);
