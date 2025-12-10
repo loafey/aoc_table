@@ -188,8 +188,9 @@ impl TableGen {
         let mut avg = Duration::from_secs(0);
         let mut worst = Duration::from_secs(0);
         let mut break_after_10 = false;
+        let mut break_after_1 = false;
         for i in 0..test_amount {
-            if break_after_10 && i > 10 {
+            if (break_after_10 && i > 10) || break_after_1 {
                 break;
             }
             let instant = Instant::now();
@@ -200,6 +201,9 @@ impl TableGen {
             worst = worst.max(time);
             if time.as_secs_f32() > 0.5 {
                 break_after_10 = true;
+            }
+            if time.as_secs_f32() > 600.0 {
+                break_after_1 = true;
             }
         }
         avg /= test_amount;
